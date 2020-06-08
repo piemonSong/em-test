@@ -72,7 +72,7 @@
 -->
 <script>
     var map = L.map('map').setView([35.505, 116], 4);
-    L.tileLayer('http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
+    L.tileLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
     const colorArr = ['rgb(149, 137, 211)', 'rgb(149, 137, 211)', 'rgb(149, 137, 211)', 'rgb(149, 137, 211)',
         'rgb(150, 209, 216)', 'rgb(129, 204, 197)', 'rgb(103, 180, 186)', 'rgb(95, 143, 197)',
         'rgb(80, 140, 62)', 'rgb(121, 146, 28)', 'rgb(171, 161, 14)', 'rgb(223, 177, 6)',
@@ -93,12 +93,8 @@
         c.width = img.width;
         c.height = img.height;
         const ctx = c.getContext('2d');
-        console.log(img.width, img.height);
-            ctx.drawImage(img, 0, 0, img.width, img.height);
-            const imgData = ctx.getImageData(0, 0, img.width, img.height);
-            // console.log(imgData);
-       // const arr = [], s = 8 * 257* 4;
-        // imgData.data.forEach((item,i) => {if(i>=s && i%4 === 0){ arr.push(item)}});
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+        const imgData = ctx.getImageData(0, 0, img.width, img.height);
         initMap(imgData.data);
 
     }
@@ -128,68 +124,83 @@
         }).addTo(map);
     }
     initWind();
-    async function initWind() {
-        try {
-            const u10Response = await fetch('./data/u10.json');
-            const u10 = await u10Response.json();
-            const v10Response = await fetch('./data/v10.json');
-            const v10 = await v10Response.json();
-            const latResponse = await fetch('./data/lat.json');
-            const lat = await latResponse.json();
-            const lonResponse = await fetch('./data/lon.json');
-            const lon = await lonResponse.json();
+    function initWind() {
 
-            const u10Data = u10.variables.U10.data[0];
-            const v10Data = v10.variables.V10.data[0];
-            const latData = lat.variables.LAT.data;
-            const lonData = lon.variables.LON.data;
-
-            const u10CompData = [], v10CompData = [];
-            u10Data.reverse().forEach(item => u10CompData.push(...item));
-            v10Data.reverse().forEach(item => v10CompData.push(...item));
-
-            const la1 = latData[latData.length - 1], la2 = latData[0],
-                ny = latData.length,
-                dy = (la1 - la2) / ny;
-            const lo1 = lonData[0], lo2 = lonData[lonData.length - 1],
-                nx = lonData.length,
-                dx = (lo2 - lo1) / nx;
-            const refTime = '2016-04-30T06:00:00.000Z';
-            const uCompHeader = {
-                    parameterCategory: 2,
-                    parameterNumber: 2,
-                    nx,ny, lo1,lo2,la1,la2, dx,dy,
-                    refTime
-                },
-                vCompHeader =  {
-                    parameterCategory: 2,
-                    parameterNumber: 3,
-                    nx,ny, lo1,lo2,la1,la2, dx,dy,
-                    refTime
-                }
-
-            const data = [{
-                header: uCompHeader,
-                data: u10CompData
-            },{
-                header: vCompHeader,
-                data: v10CompData
-            }];
-            var velocityLayer = L.velocityLayer({
-                displayValues: true,
-                displayOptions: {
-                    velocityType: 'Global Wind',
-                    displayPosition: 'bottomleft',
-                    displayEmptyString: 'No wind data'
-                },
-                data: data,
-                maxVelocity: 15
-            }).addTo(map);
+        const img = new Image();
+        img.src = './img/uv.png';
+        img.onload = function () {
+            let c = document.createElement('canvas');
+            c.width = img.width;
+            c.height = img.height;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
+            (async function f() {
+                const uArr = [], vArr = [];
+                const infoResponse = await fetch('./img/uv.json');
+                const info = await infoResponse.json();
+                console.log(info, info.width);
+                imgData.forEach((item,i) => {
+                    if(i%4 === 0){
+                        uArr.push(imgData[i+3]===0? 9999 : item / 255 * (info.maxU10- info.minU10) + info.minU10)
+                    }
+                    if(i%4 === 1){
+                        vArr.push(imgData[i+3]===0? 9999 : item / 255 * (info.maxV10- info.minV10) + info.minV10)
+                    }
+                });
 
 
+                // const udata = chunk(uArr, info.width);
+                // const vdata = chunk(vArr, info.width);
+                const refTime = '2016-04-30T06:00:00.000Z';
+                const uCompHeader = {
+                        parameterCategory: 2,
+                        parameterNumber: 2,
+                        nx: info.width,
+                        ny: info.height,
+                        lo1: info.lo1,
+                        lo2: info.lo1 + info.dx * info.width,
+                        la1: info.la1,
+                        la2: info.la1 - info.dy * info.height,
+                        dx: info.dx,
+                        dy: info.dy,
+                        refTime
+                    },
+                    vCompHeader =  {
+                        parameterCategory: 2,
+                        parameterNumber: 3,
+                        nx: info.width,
+                        ny: info.height,
+                        lo1: info.lo1,
+                        lo2: info.lo1 + info.dx * info.width,
+                        la1: info.la1,
+                        la2: info.la1 - info.dy * info.height,
+                        dx: info.dx,
+                        dy: info.dy,
+                        refTime
+                    }
 
-        } catch (error) {
-            console.log('Fetch Error: ', error)
+                const windData = [{
+                    header: uCompHeader,
+                    data: uArr
+                },{
+                    header: vCompHeader,
+                    data: vArr
+                }];
+                console.log(windData);
+                var velocityLayer = L.velocityLayer({
+                    displayValues: true,
+                    displayOptions: {
+                        velocityType: 'Global Wind',
+                        displayPosition: 'bottomleft',
+                        displayEmptyString: 'No wind data'
+                    },
+                    data: windData,
+                    maxVelocity: 15
+                }).addTo(map);
+            })();
+
+
         }
     };
 

@@ -55,7 +55,7 @@
 <script src="./js/leaflet-echarts.js"></script>
 <script>
     var map = L.map('map').setView([35.505, 116], 4);
-    L.tileLayer('http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
+    L.tileLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
     var overlay = new L.EchartsLayer(map, echarts);
     var chartsContainer = overlay.getEchartsContainer();
     overlay.initECharts(chartsContainer);

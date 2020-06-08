@@ -19,8 +19,8 @@
 <script src="https://unpkg.com/echarts@4.8.0/dist/echarts.min.js"></script>
 <script src="./js/leaflet-echarts.js"></script>
 <script>
-    var map = L.map('map').setView([43.464880828929545,89.67041015625001], 7);
-    L.tileLayer('http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
+    var map = L.map('map').setView([43.464880828929545,89.67041015625001], 8);
+    L.tileLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
     var overlay = new L.EchartsLayer(map, echarts);
     var chartsContainer = overlay.getEchartsContainer();
     overlay.initECharts(chartsContainer);
