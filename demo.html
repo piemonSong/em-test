@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <link rel="stylesheet" href="./css/leaflet-velocity.min.css" />
+    <style>
+        html, body, #map {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map">
+
+    </div>
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+    <script src="./js/leaflet-velocity.js"></script>
+    <script src="https://unpkg.com/georaster@1.0.5/dist/georaster.browser.bundle.min.js"></script>
+    <script src="./js/georaster-layer-for-leaflet_interpotation.bundle.js"></script>
+    <script src="https://unpkg.com/chroma-js@2.1.0/chroma.min.js"></script>
+<!--
+    <script src="https://unpkg.com/georaster-layer-for-leaflet@0.4.2/georaster-layer-for-leaflet.browserify.min.js"></script>
+-->
+    <script>
+        var map = L.map('map').setView([35.505, 116], 4);
+        L.tileLayer('http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
+        const colorArr = ["#0000ff",'#00ffff', "#00ff00", "#ffff00", "#ff0000"];
+        const colorScale =  chroma.scale(colorArr);
+        const colorList =
+            Array.from({length:28},(v,i)=> colorScale(i/27));
+        const labels = Array.from({length:colorList.length+1},(v,i)=>273 + i*1.2);
+        async function init() {
+            try {
+                const u10Response = await fetch('./data/u10.json');
+                const u10 = await u10Response.json();
+                const v10Response = await fetch('./data/v10.json');
+                const v10 = await v10Response.json();
+                const latResponse = await fetch('./data/lat.json');
+                const lat = await latResponse.json();
+                const lonResponse = await fetch('./data/lon.json');
+                const lon = await lonResponse.json();
+
+                const u10Data = u10.variables.U10.data[0];
+                const v10Data = v10.variables.V10.data[0];
+                const latData = lat.variables.LAT.data;
+                const lonData = lon.variables.LON.data;
+
+                const u10CompData = [], v10CompData = [];
+                u10Data.reverse().forEach(item => u10CompData.push(...item));
+                v10Data.reverse().forEach(item => v10CompData.push(...item));
+
+                const la1 = latData[latData.length - 1], la2 = latData[0],
+                    ny = latData.length,
+                    dy = (la1 - la2) / ny;
+                const lo1 = lonData[0], lo2 = lonData[lonData.length - 1],
+                    nx = lonData.length,
+                    dx = (lo2 - lo1) / nx;
+                const refTime = '2016-04-30T06:00:00.000Z';
+                const uCompHeader = {
+                    parameterCategory: 2,
+                    parameterNumber: 2,
+                    nx,ny, lo1,lo2,la1,la2, dx,dy,
+                    refTime
+                },
+                vCompHeader =  {
+                    parameterCategory: 2,
+                    parameterNumber: 3,
+                    nx,ny, lo1,lo2,la1,la2, dx,dy,
+                    refTime
+                }
+
+                const data = [{
+                    header: uCompHeader,
+                    data: u10CompData
+                },{
+                    header: vCompHeader,
+                    data: v10CompData
+                }];
+
+
+                const t2Response = await fetch('./data/t2.json');
+                const t2 = await t2Response.json();
+                const t2Data = t2.variables.T2.data[0];
+                const values = [t2Data.reverse()];
+                const noDataValue = 9.969210e+36;
+                const projection = 4326;
+                const metadata = { noDataValue, projection, xmin: lo1, ymax: la1, pixelWidth: dx, pixelHeight: dy };
+                const georaster = await parseGeoraster(values, metadata);
+                console.log(values, metadata,georaster, '--------------------'  );
+                const layer = new GeoRasterLayer({
+                    georaster: georaster,
+                    opacity: 0.8,
+                    //no_data_value:0,
+                    isContain:null,
+                    pixelValueToColorFn: value => {
+                        const index = labels.findIndex(el =>el>=value);
+                        return value[0] > 999 ? 'rgba(0,0,0,0)': colorList[(index === -1 ? labels.length-1 :(index===0?1:index) ) - 1];
+                    }
+                }).addTo(map);
+
+                var velocityLayer = L.velocityLayer({
+                    displayValues: true,
+                    displayOptions: {
+                        velocityType: 'Global Wind',
+                        displayPosition: 'bottomleft',
+                        displayEmptyString: 'No wind data'
+                    },
+                    data: data,
+                    maxVelocity: 15
+                }).addTo(map);
+
+
+
+            } catch (error) {
+                console.log('Fetch Error: ', error)
+            }
+        };
+        init();
+
+    </script>
+</body>
+</html>

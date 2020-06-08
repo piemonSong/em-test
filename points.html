@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <style>
+        html, body, #map {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+        }
+        #l {
+            position: absolute;
+            right: 1.5em;
+            z-index: 666;
+            line-height: 1.5em;
+            font-size: 80%;
+            bottom: 7.5em;
+            display: table-cell;
+            background: #777;
+            background: linear-gradient(90deg,#555,#999,#555);
+        }
+        #l span {
+            padding: 0 .25em;
+            display: block;
+            text-align: center;
+        }
+        #l .yy {
+            color: #000;
+            background: #fff;
+        }
+        #l .ew {
+            padding: 0 .5em;
+            font-family: Helvetica Neue,Arial,Helvetica,sans-serif;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+<div id="map">
+
+    <div id="l" title="" class="">
+        <span class="yy" style="">µg/m³</span>
+        <span class="ew" style="background: rgba(177,6,50, 0.92); color: rgb(0, 0, 0);">300</span>
+        <span class="ew" style="background: rgba(255,10,147, 0.92); color: rgb(0, 0, 0);">200</span>
+        <span class="ew" style="background: rgba(255,15,0, 0.92); color: rgb(0, 0, 0);">150</span>
+        <span class="ew" style="background: rgba(245, 145, 8, 0.92); color: rgb(0, 0, 0);">100</span>
+        <span class="ew" style="background: rgba(251, 235, 12, 0.92); color: rgb(0, 0, 0);">50</span>
+        <span class="ew" style="background: rgba(0, 228, 0, 0.92); color: rgb(255, 255, 255);">0</span>
+    </div>
+</div>
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+<script src="https://unpkg.com/echarts@4.8.0/dist/echarts.min.js"></script>
+<script src="./js/leaflet-echarts.js"></script>
+<script>
+    var map = L.map('map').setView([35.505, 116], 4);
+    L.tileLayer('http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
+    var overlay = new L.EchartsLayer(map, echarts);
+    var chartsContainer = overlay.getEchartsContainer();
+    overlay.initECharts(chartsContainer);
+    const colorList = [
+        [
+            'rgb(0, 228, 0)',
+            'rgb(23,145,72)'
+        ],
+        [
+            'rgb(251, 235, 12)',
+            'rgb(204, 195, 72)'
+        ],
+        [
+            'rgb(245, 145, 8)',
+            'rgb(189,100,20)'
+        ],
+        [
+            'rgb(255,15,0)',
+            'rgb(204,18,5)'
+        ],
+        [
+            'rgb(255,10,147)',
+            'rgb(185,8,110)'
+        ],
+        [
+            'rgb(177,6,50)',
+            'rgb(99,4,28)'
+        ]
+    ];
+    const svgPath = 'M511.140571 957.494857c19.291429 0 37.302857-8.137143 54.436572-37.705143l79.286857-132.425143h143.140571c127.707429 0 196.278857-70.729143 196.278858-196.297142V262.784c0-125.568-68.571429-196.278857-196.278858-196.278857H235.995429c-127.268571 0-196.278857 70.290286-196.278858 196.278857v328.283429c0 125.988571 68.992 196.297143 196.278858 196.297142h141.44l79.286857 132.425143c17.133714 29.568 35.126857 37.705143 54.418285 37.705143z';
+    const labels = [0, 50, 100, 150, 200, 300];
+    function getColor(params) {
+       const value = params &&params.value && params.value[2] ?
+           params.value[2] : 0;
+       const index =  labels.findIndex(v=>v>=value);
+       const colors = colorList[index===-1 ? colorList.length - 1 : index === 0 ? 0 : index - 1]
+        return new echarts.graphic.RadialGradient(0.4, 0.3, 1, [{
+            offset: 0,
+            color: colors[0]
+        }, {
+            offset: 1,
+            color:colors[1]
+        }])
+    };
+    let preZoom  = 4;
+    const  option = {
+        title: {
+
+        },
+        tooltip : {
+            trigger: 'item',
+            formatter:  params=> {
+                return params.name +'/'+ params.value[2]
+            }
+        },
+        legend: {
+            orient: 'vertical',
+            y: 'bottom',
+            x:'right',
+            data:['t'],
+            textStyle: {
+                color: '#fff'
+            }
+        },
+        geo: {
+
+        },
+        series : [
+            {
+                name: 'PM2.5',
+                type: 'scatter',
+                coordinateSystem: 'geo',
+                data:[],
+                symbolSize: 15,
+                label: {
+                    normal: {
+                        formatter: '{b}',
+                        position: 'right',
+                        show: false
+                    },
+                    emphasis: {
+                        show: false
+                    }
+                },
+                itemStyle: {
+                    normal: {
+                        shadowBlur: 15,
+                        shadowColor:'rgba(25, 100, 20, 0.5)',
+                        shadowOffsetY: 5,
+                        color: getColor
+                    }
+                },
+            },
+            {
+                name: 't',
+                type: 'scatter',
+                coordinateSystem: 'geo',
+                data:[],
+                symbolSize: 24,
+                symbolOffset: [0, '50%'],
+                label: {
+                    normal: {
+                        //backgroundColor: '#fff',
+                        formatter: ['{Value|{@[2]}}', '{Name|{b}}'].join('\n'),
+                        color:'#fff',
+                        position:  'insideTop',
+                        distance: 5,
+                        padding: 2,
+                        show: true,
+                        rich: {
+                            Value: {
+                                color: '#fff',
+                                align: 'center'
+                            },
+                            Name: {
+                                marginTop: 10,
+                                backgroundColor: '#fff',
+                                lineHeight: 30,
+                                padding: 2
+                            }
+                        }
+                    },
+                    emphasis: {
+                        show: false
+                    }
+                },
+                symbol: 'path://'+ svgPath,
+                itemStyle: {
+                    normal: {
+                        shadowBlur: 14,
+                        shadowColor: 'rgba(120, 101, 50, 0.5)',
+                        shadowOffsetY: 5,
+                        color: getColor
+                    }
+                },
+                show: false,
+                zlevel: -1
+            }
+        ]
+    };
+
+
+    fetch('./img/points.json')
+        .then(response => {
+            console.log(response);
+            return response.json();
+        })
+        .then(data => {
+            const result =  data.map(v => ({
+                id: v.name,
+                value: [...v.coordinates, v.value]
+            }));
+            option.series[0].data = result;
+            // option.series[1].data= data.map(v => ({
+            //     id: v.name,
+            //     value: [...v.coordinates, v.value]
+            // }));
+            // option.series[0].data =;
+
+            overlay.setOption(option);
+            // map.on('zoomend', function (e) {
+            //     preZoom = map.getZoom();
+            // });
+            map.on('zoomend', function (e) {
+               const zoom = map.getZoom();
+               if(zoom >= 7 && preZoom < 7 ) {
+                   option.series[1].data = result;
+                   option.series[0].data = [];
+                   overlay.setOption(option);
+               } else if( preZoom >= 7 && zoom < 7) {
+                   option.series[0].data = result;
+                   option.series[1].data = [];
+                   overlay.setOption(option);
+               }
+                preZoom = zoom;
+            } );
+        })
+
+</script>
+</body>
+</html>

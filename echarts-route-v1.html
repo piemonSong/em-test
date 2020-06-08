@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <style>
+        html, body, #map {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="map">
+
+</div>
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+<script src="https://unpkg.com/echarts@4.8.0/dist/echarts.min.js"></script>
+<script src="./js/leaflet-echarts.js"></script>
+<script>
+    var map = L.map('map').setView([43.464880828929545,89.67041015625001], 7);
+    L.tileLayer('http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
+    var overlay = new L.EchartsLayer(map, echarts);
+    var chartsContainer = overlay.getEchartsContainer();
+    overlay.initECharts(chartsContainer);
+    const colors = ['#1ba5ff' , '#ff2303', '#00ff10', '#ffbf13'];
+    fetch('./data/path.json').then(reponse => reponse.json()).then(data => {
+        console.log(data);
+        const lines = [];
+        const points =  data['21'].map(v => ({
+            name: '',
+            value: [v[1],v[0]]
+        }));
+        points.push({
+            name: '乌鲁木齐',
+            value: [data['3'][0][1], data['3'][0][0]]
+        })
+        for(let i = 0; i < data['3'].length; i++) {
+            const coords = [];
+            for(let key in data) {
+                const v = data[key][i];
+                coords.push([v[1], v[0]]);
+            }
+
+            lines.push({
+                coords: coords,
+                lineStyle: {
+                    normal: {
+                        color: colors[i % 3]
+
+                            // echarts.color.modifyHSL('#5A94DF', Math.round(Math.random()* 300))
+                    }
+                }
+            });
+        }
+        console.log(lines);
+        const option  = {
+            geo: {
+            },
+            series: [{
+                type: 'lines',
+                coordinateSystem: 'geo',
+                polyline: true,
+                data: lines,
+                silent: true,
+                lineStyle: {
+                    // color: '#c23531',
+                    // color: 'rgb(200, 35, 45)',
+                    opacity: 0.4,
+                    width: 3
+                },
+                progressiveThreshold: 500,
+                progressive: 200
+            }, {
+                type: 'lines',
+                coordinateSystem: 'geo',
+                polyline: true,
+                data: lines,
+                lineStyle: {
+                    width: 0
+                },
+                effect: {
+                    constantSpeed: 100,
+                    show: true,
+                    trailLength: 0.1,
+                    symbolSize: 4
+                },
+                zlevel: 1
+            },
+            {
+                name: 'pm2.5',
+                type: 'scatter',
+                coordinateSystem: 'geo',
+                data: points,
+                encode: {
+                    value: 2
+                },
+                symbolSize: 10,
+                itemStyle: {
+                    color: '#ddce22'
+                },
+                zlevel: 1
+            }
+            ]
+        };
+        overlay.setOption(option);
+    })
+
+</script>
+</body>
+</html>
