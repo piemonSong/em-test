@@ -1,0 +1,86 @@
+html, body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    font-size: 14px;
+    font-family: Avenir,-apple-system,BlinkMacSystemFont,segoe ui,Roboto,helvetica neue,Arial,noto sans,sans-serif,apple color emoji,segoe ui emoji,segoe ui symbol,noto color emoji,sans-ser;
+}
+* {
+    box-sizing: border-box;
+}
+.contain {
+    width: 100%;
+    overflow: hidden;
+    clear: both;
+    height: 100%;
+    position: relative;
+}
+.right-container{
+    width: 250px;
+    float: left;
+    height: 300px;
+    background-color: #f9f8f4;
+}
+.left-container{
+    width: calc(100% - 250px);
+    float: left;
+    height: 100%;
+    transition: all .5s;
+}
+.full-container {
+    width: 100%;
+}
+.map-contain{
+    height: 50%;
+    margin: 0;
+}
+
+.map-contain .col {
+    padding: 0;
+}
+.l-map {
+    height: 100%;
+}
+.l-map .leaflet-control-attribution {
+    display: none!important;
+}
+.right-header {
+    background: #f6f8fa;
+    color: #424242;
+    border: 1px solid #d1d5da;
+    padding: 5px;
+}
+.fa {
+    font-size: 22px;
+    color: #7f7f7f;
+    cursor: pointer;
+    transition: all .3s;
+}
+.fa:hover {
+    color: #1890ff;
+}
+#icon-hide:hover{
+    -webkit-transform: translateX(7px);
+    transform: translateX(7px);
+}
+.collapse-icon {
+    position: absolute;
+    z-index: 666;
+    top: 20px;
+    right: 15px;
+}
+#icon-show {
+    color: #7f7f7f;
+}
+#icon-show:hover{
+    -webkit-transform: translateX(-7px);
+    transform: translateX(-7px);
+    color: #1890ff;
+}
+.hide {
+    display: none;
+}
+
+.right-content {
+    padding: 10px 5px;
+}

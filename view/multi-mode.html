@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <link rel="stylesheet" href="../css/font-awesome.min.css" />
+    <link rel="stylesheet" href="../css/mode.html.css?v=v1.1">
+</head>
+<body>
+<div class="contain">
+    <div class="left-container">
+    <div class="row map-contain">
+        <div class="col border">
+            <div id="map00" class="l-map">
+            </div>
+        </div>
+        <div class="col border">
+            <div id="map01" class="l-map">
+            </div>
+        </div>
+    </div>
+    <div class="row map-contain">
+        <div class="col border">
+            <div id="map10" class="l-map">
+            </div>
+        </div>
+        <div class="col border">
+            <div id="map11" class="l-map">
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="right-container collapse show">
+        <div class="right-header">
+            <i id="icon-hide" class="fa fa-caret-square-o-right" aria-hidden="true"></i>
+        </div>
+        <div class="right-content">
+            <div class="form-group">
+                <label for="productType">产品类型：</label>
+                <div id="productType" class="btn-group" role="group" aria-label="Basic example">
+                    <button type="button" class="btn btn-outline-primary active" data-value="spatial">空间产品</button>
+                    <button type="button" class="btn btn-outline-primary"  data-value="city">城市产品</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <div id="dataType" class="btn-group" role="group" aria-label="数据类型">
+                    <button type="button" class="btn btn-outline-primary active" data-value="spatial">空间产品</button>
+                    <button type="button" class="btn btn-outline-primary"  data-value="city">城市产品</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="collapse-icon hide">
+        <i id="icon-show" class="fa fa-caret-square-o-left" aria-hidden="true"></i>
+    </div>
+</div>
+<script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.sync@0.2.4/L.Map.Sync.js"></script>
+<script>
+    const app = {
+        maps: {},
+        mapKeys: [],
+    };
+    createMaps();
+    init();
+    function createMaps() {
+        $('.l-map').each(function () {
+
+            const id = this.id;
+            app.mapKeys.push(id);
+            app.maps[id] = L.map(this.id, {zoomControl: false}).setView([35.505, 116], 4);
+            L.tileLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo( app.maps[id]);
+        })
+        app.mapKeys.forEach(id => {
+            app.mapKeys.forEach( id1 => {
+                if(id !== id1) {
+                    app.maps[id].sync(app.maps[id1]);
+                }
+            })
+        } );
+    }
+
+
+    function mapResize() {
+        setTimeout(()=> {
+            app.mapKeys.forEach(key => app.maps[key].invalidateSize());
+        }, 500);
+    }
+
+    function init(){
+        $('#icon-hide').click(function () {
+            $('.right-container').removeClass('show');
+            $('.left-container').addClass('full-container');
+            $('.collapse-icon').removeClass('hide');
+            mapResize();
+        });
+        $('#icon-show').click(function () {
+            $('.right-container').addClass('show');
+            $('.left-container').removeClass('full-container');
+            $('.collapse-icon').addClass('hide');
+            mapResize();
+        });
+        $('#productType button').click(function () {
+            $('#productType button').removeClass('active');
+            $(this).addClass('active');
+
+        })
+    }
+</script>
+</body>
+</html>
