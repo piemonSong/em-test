@@ -66,7 +66,7 @@
 <script src="./js/leaflet-velocity.js"></script>
 <script src="https://unpkg.com/georaster@1.0.5/dist/georaster.browser.bundle.min.js"></script>
 <script src="https://unpkg.com/chroma-js@2.1.0/chroma.min.js"></script>
-<script src="./js/georaster-layer-for-leaflet_interpotation.bundle.js"></script>
+<script src="./js/geo-raster-for-leaflet-new.js"></script>
 <!--
 <script src="https://unpkg.com/georaster-layer-for-leaflet@0.4.2/georaster-layer-for-leaflet.browserify.min.js"></script>
 -->
@@ -77,7 +77,8 @@
         'rgb(150, 209, 216)', 'rgb(129, 204, 197)', 'rgb(103, 180, 186)', 'rgb(95, 143, 197)',
         'rgb(80, 140, 62)', 'rgb(121, 146, 28)', 'rgb(171, 161, 14)', 'rgb(223, 177, 6)',
         'rgb(243, 150, 6)', 'rgb(236, 95, 21)', 'rgb(190, 65, 18)', 'rgb(138, 43, 10)', 'rgb(138, 43, 10)'];
-    const colorScale =  chroma.scale(colorArr).domain([0, 150]);
+    const colorScale =  chroma.scale(colorArr)
+        //.domain([0, 150]);
     const colorList =
         Array.from({length:28},(v,i)=> colorScale(i/27));
     const labels = Array.from({length:colorList.length+1},(v,i)=>273 + i*1.2);
@@ -123,6 +124,7 @@
             georaster: georaster,
             opacity: 0.6,
             color: colorScale,
+            scale: colorScale,
             //no_data_value:0,
             isContain:null,
             pixelValueToColorFn: value => {

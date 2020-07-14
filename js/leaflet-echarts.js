@@ -202,7 +202,6 @@ L.EchartsLayer = L.Class.extend({
                 } else if(series[i].type === 'lines') {
                     const data = series[i].data,
                         ret = [];
-                    console.log(data, data.length);
                     for (let i = 0; i < data.length; i++) {
                         const coords = [];
                         for (let j = 0; j < data[i].coords.length; j++) {
@@ -214,8 +213,18 @@ L.EchartsLayer = L.Class.extend({
                         });
                         ret.push(obj)
                     }
-                    console.log(ret,'=ret');
                     option.series[i].data = ret;
+                } else if(series[i].type === 'flowGL') {
+                    const data = series[i].data,
+                        ret = [];
+                    for(let i = 0; i < data.length ;i++){
+                        let latLng =  L.latLng([data[i][0],data[i][1]]);
+                        const layerXY = self.geoCoord2Pixel(latLng)
+                        ret.push([layerXY[0], layerXY[1], ...data[i].slice(2)])
+                    }
+                    console.log(ret);
+                    option.series[i].data = ret;
+
                 }
             }
 

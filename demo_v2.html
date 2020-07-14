@@ -180,12 +180,13 @@
                 console.log(info, info.width);
                 imgData.forEach((item,i) => {
                     if(i%4 === 0){
-                        uArr.push(imgData[i+3]===0? 9999 : item / 255 * (info.maxU10- info.minU10) + info.minU10)
+                        uArr.push(imgData[i+3]===0? 0 : item / 255 * (info.maxU10- info.minU10) + info.minU10)
                     }
                     if(i%4 === 1){
-                        vArr.push(imgData[i+3]===0? 9999 : item / 255 * (info.maxV10- info.minV10) + info.minV10)
+                        vArr.push(imgData[i+3]===0? 0 : item / 255 * (info.maxV10- info.minV10) + info.minV10)
                     }
                 });
+                console.log(vArr);
 
 
                 // const udata = chunk(uArr, info.width);

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <style>
+        html, body, #map {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="map">
+
+</div>
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+<script src="https://unpkg.com/echarts@4.8.0/dist/echarts.min.js"></script>
+<script src="https://unpkg.com/echarts-gl@1.1.1/dist/echarts-gl.js"></script>
+<script src="../js/leaflet-echarts.js"></script>
+<script>
+    var map = L.map('map').setView([43.464880828929545,112.67041015625001], 5);
+    L.tileLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
+    var overlay = new L.EchartsLayer(map, echarts);
+    var chartsContainer = overlay.getEchartsContainer();
+    overlay.initECharts(chartsContainer);
+
+
+    windInit();
+    function windInit() {
+        const Time = 0;
+        const img = new Image();
+        img.src = '../data/UV10_1013/UV10_1013_hourly_F000.png';
+        img.onload = function () {
+            let c = document.createElement('canvas');
+            c.width = img.width;
+            c.height = img.height;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
+            console.log(imgData);
+            (async function f() {
+                const uArr = [], vArr = [];
+                const infoResponse = await fetch('../data/UV10_1013/UV10_1013_hourly.json');
+                const info = await infoResponse.json();
+                const dy = (info.LatMax - info.LatMin)/info.Height,
+                    dx = (info.LonMax - info.LonMin)/info.Width;
+                const UMinMaxValue = info.Values[0].MinMaxValue,
+                    VMinMaxValue= info.Values[1].MinMaxValue;
+                const minMaxU = UMinMaxValue.find(v => v.Time === Time);
+                const minU = +minMaxU.MinValue, maxU = +minMaxU.MaxValue;
+
+                const minMaxV = VMinMaxValue.find(v => v.Time === Time);
+                const minV = +minMaxV.MinValue, maxV = +minMaxV.MaxValue;
+                // imgData.forEach((item, i) => {
+                //     if (i % 4 === 0) {
+                //         uArr.push(imgData[i+3]===0? 0 : item / 255 * (maxU - minU) + minU);
+                //     }
+                //     if (i % 4 === 1) {
+                //         vArr.push(imgData[i+2]===0? 0 : item / 255 * (maxV- minV) + minV)
+                //     }
+                // });
+                //
+                const height = info.Height, width = info.Width,
+                    la1 = info.LatMax, lo1 = info.LonMin
+
+                const data = [];
+                  let minMag = 0,
+                    maxMag = 0;
+                for(let i = 0; i<imgData.length; i+=4 ) {
+                    const lat_delta = Math.floor(i/4/width);
+                    const lon_delta = i/4%width;
+
+                    const u =imgData[i+3]===0? 0 : imgData[i] / 255 * (maxU - minU) + minU;
+                    const v =imgData[i+3]===0? 0 : imgData[i+1] / 255 * (maxV- minV) + minV;
+                    const mag =  Math.sqrt(u * u + v * v);
+                    data.push([la1 - dy*lat_delta,  lo1 + dx * lon_delta,  u,v, mag]);
+                    maxMag = Math.max(maxMag, mag);
+                }
+                console.log(data);
+                   // maxMag =  Math.sqrt(u * u + v * v);
+                // for(let i = 0; i< height;i++) {
+                //     const lat = la1 - dy * i;
+                //     for(let j = 0; j< width; j++) {
+                //         let u = uArr[width* i + j], v = vArr[width* i + j];
+                //         const mag =  Math.sqrt(u * u + v * v);
+                //         data.push([lat,  lo1 + dx * j,  v,u, mag]);
+                //         maxMag = Math.max(maxMag, mag);
+                //     }
+                // }
+
+                overlay.setOption({
+                    visualMap: {
+                        left: 'right',
+                        min: minMag,
+                        max: maxMag,
+                        dimension: 4,
+                        inRange: {
+                            // color: ['green', 'yellow', 'red']
+                            color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+                        },
+                        realtime: false,
+                        calculable: true,
+                        textStyle: {
+                            color: '#fff'
+                        }
+                    },
+                    geo: {
+                    },
+                    series: [{
+                        type: 'flowGL',
+                        coordinateSystem: 'geo',
+                        data: data,
+                        supersampling: 4,
+                        particleType: 'line',
+                        particleDensity: 128,
+                        particleSpeed: 1,
+                        // gridWidth: windData.nx,
+                        // gridHeight: windData.ny,
+                        itemStyle: {
+                            opacity: 0.7
+                        }
+                    }]
+                });
+            })()
+        }
+    }
+</script>
+</body>
+</html>

@@ -64,6 +64,7 @@ var GeoRasterLayer = L.GridLayer.extend({
     },
 
     createTile: function createTile(coords) {
+        console.log(coords,'----------');
       const t = Date.now()
 
 
@@ -120,39 +121,41 @@ var GeoRasterLayer = L.GridLayer.extend({
         //if (debug_level >= 1) console.log("ymax of raster:", ymax);
 
         var number_of_pixels_per_rectangle = this._tile_width / 8;
+        setTimeout( async ()=> {
+            for (var h = 0; h < number_of_rectangles_down; h++) {
+                var lat = ymax_of_tile - (h + 0.5) * height_of_rectangle_in_degrees;
 
-        for (var h = 0; h < number_of_rectangles_down; h++) {
-            var lat = ymax_of_tile - (h + 0.5) * height_of_rectangle_in_degrees;
+                for (var w = 0; w < number_of_rectangles_across; w++) {
+                    var lng = xmin_of_tile + (w + 0.5) * width_of_rectangle_in_degrees;
 
-            for (var w = 0; w < number_of_rectangles_across; w++) {
-                var lng = xmin_of_tile + (w + 0.5) * width_of_rectangle_in_degrees;
-
-                if (lat > ymin && lat < ymax && lng > xmin && lng < xmax
+                    if (lat > ymin && lat < ymax && lng > xmin && lng < xmax
                     //&& this.isContain(lng,lat)
-                ) {
+                    ) {
                         let x_in_raster_pixels = Math.floor( (lng - xmin) / pixelWidth );
                         let y_in_raster_pixels = Math.floor( (ymax - lat) / pixelHeight );
                         //let values = rasters.map(raster => raster[y_in_raster_pixels][x_in_raster_pixels]);
-                        
+
                         let value = this.interpolatedValueAtIndexes((lng - xmin) / pixelWidth,(ymax - lat) / pixelHeight)
                         let color
                         if (value && value != no_data_value && !isNaN(value) && value < 999) {
-                            color = 
-                            this.options.pixelValueToColorFn(value)
+                            color =
+                                this.options.pixelValueToColorFn(value)
                             //scale((value - mins[0]) / ranges[0]).hex();
                         }else{
                             color ='rgba(0,0,0,0)'
                         }
-                       context.fillStyle = color;
-                       context.fillStyle = color;
+                        context.fillStyle = color;
+                        context.fillStyle = color;
 
-                       context.fillRect(w * width_of_rectangle_in_pixels, h * height_of_rectangle_in_pixels, width_of_rectangle_in_pixels, height_of_rectangle_in_pixels);
-                    //if (debug_level >= 1) duration_filling_rects += performance.now() - time_started_filling_rect;
+                        context.fillRect(w * width_of_rectangle_in_pixels, h * height_of_rectangle_in_pixels, width_of_rectangle_in_pixels, height_of_rectangle_in_pixels);
+                        //if (debug_level >= 1) duration_filling_rects += performance.now() - time_started_filling_rect;
 
 
+                    }
                 }
             }
-        }
+        });
+
 
       //console.log(Date.now() - t)
       return tile;
