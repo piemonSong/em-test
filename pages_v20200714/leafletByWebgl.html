@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <style>
+        *{
+            box-sizing: border-box;
+        }
+        html, body, #map {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+        }
+        .legend{
+            width: 300px;
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            transition: .3s opacity;
+            margin-bottom: 5px;
+            border-radius: 20px;
+            white-space: nowrap;
+            font-size: 12px;
+            box-shadow: 0 0 4px 0 black;
+            height: 19px;
+            z-index: 666;
+            text-transform: none;
+            line-height: 1.5;
+            background: linear-gradient(to right, rgb(149, 137, 211), rgb(149, 137, 211), rgb(149, 137, 211), rgb(149, 137, 211), rgb(150, 209, 216), rgb(129, 204, 197), rgb(103, 180, 186), rgb(95, 143, 197), rgb(80, 140, 62), rgb(121, 146, 28), rgb(171, 161, 14), rgb(223, 177, 6), rgb(243, 150, 6), rgb(236, 95, 21), rgb(190, 65, 18), rgb(138, 43, 10), rgb(138, 43, 10));
+        }
+        .legend span{
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+            color: #fff;
+            float: left;
+        }
+        .legend span:first-child {
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+        }
+        .legend span:last-child {
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+        .btn {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            z-index: 666;
+            padding: 10px 8px;
+            background: #fff4c2;
+            cursor: pointer;
+        }
+        #legendList{
+            z-index: 666;
+            position: absolute;
+            right: 20px;
+            top: 150px;
+            background: rgba(0, 0, 0, 0.75);
+            margin: 0;
+            padding: 10px;
+            list-style-type: none;
+
+        }
+        #legendList li {
+            padding: 3px;
+            width: 140px;
+            height: 20px;
+            margin: 7px 0;
+            border: 1px solid rgba(0,0,0,0);
+            cursor: pointer;
+            box-sizing: content-box;
+
+        }
+        #legendList li:hover, #legendList li.active{
+            border-color: #fff;
+            box-shadow: 2px 2px 2px #888888;
+        }
+    </style>
+</head>
+<body>
+<div id="map">
+    <button id="i-btn" class="btn" onclick="clickBtn()">play</button>
+    <ul id="legendList" class="legendList">
+
+    </ul>
+    <div class="legend">
+        <span style="width:12.5%">°C</span>
+        <span style="width: 12.5%">-20</span>
+        <span style="width: 12.5%">-10</span>
+        <span style="width: 12.5%">0</span>
+        <span style="width: 12.5%">10</span>
+        <span style="width: 12.5%">20</span>
+        <span style="width: 12.5%">30</span>
+        <span style="width: 12.5%">40</span>
+    </div>
+</div>
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+<script src="https://unpkg.com/georaster@1.0.5/dist/georaster.browser.bundle.min.js"></script>
+<script src="https://unpkg.com/chroma-js@2.1.0/chroma.min.js"></script>
+<script src="../js/georaster-layer-for-leaflet-webgl.js?v=3"></script>
+<script src="../js/color.js"></script>
+<script>
+    var map = L.map('map').setView([35.505, 116], 4);
+    L.tileLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}', {}).addTo(map);
+    const colorArr = ['rgb(149, 137, 211)', 'rgb(149, 137, 211)', 'rgb(149, 137, 211)', 'rgb(149, 137, 211)',
+        'rgb(150, 209, 216)', 'rgb(129, 204, 197)', 'rgb(103, 180, 186)', 'rgb(95, 143, 197)',
+        'rgb(80, 140, 62)', 'rgb(121, 146, 28)', 'rgb(171, 161, 14)', 'rgb(223, 177, 6)',
+        'rgb(243, 150, 6)', 'rgb(236, 95, 21)', 'rgb(190, 65, 18)', 'rgb(138, 43, 10)', 'rgb(138, 43, 10)'];
+    let colorScale =  chroma.scale(colorArr);
+    initColorLegend();
+    function initColorLegend() {
+       const legendList = document.getElementById('legendList');
+        for(let i = 0; i < COLOR_LIST.length; i++) {
+            const li = document.createElement('li');
+            li.style.background = `linear-gradient(to right,  ${COLOR_LIST[i].join(',')})`;
+            legendList.appendChild(li);
+            li.className='color-item';
+            li.dataset.index = i+'';
+            if(i===1){
+                li.classList.add('active');
+            }
+        }
+        legendList.addEventListener('click', (e)=>{
+
+            if(e.target.tagName==='LI'){
+                const doms  = document.getElementsByClassName('color-item');
+                let index = 1;
+                for(let i = 0; i < doms.length; i++) {
+                    if(doms[i].dataset.index === e.target.dataset.index) {
+                        e.target.classList.add('active');
+                        index= +e.target.dataset.index
+                    }else {
+                        doms[i].classList.remove('active');
+                    }
+                }
+                colorScale = chroma.scale(COLOR_LIST[index]);
+                if(app.layer){
+                    app.layer.redraw();
+                }
+                console.log(index);
+            }
+        })
+    }
+    const chunk = (arr, size) =>
+        Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+            arr.slice(i * size, i * size + size)
+        );
+    const app = {
+        time: 0
+    };
+    getJsonInfo();
+    const btn = document.getElementById('i-btn');
+    async function getJsonInfo() {
+        const infoResponse = await fetch('../data/T2_1013/T2_1013_hourly.json');
+        const info = await infoResponse.json();
+
+        const MinMaxValue = info.Values[0].MinMaxValue;
+        const minMax = MinMaxValue.find(v=>v.Time === app.time);
+        app.min = +minMax.MinValue;
+        app.max = +minMax.MaxValue;
+        app.width = info.Width;
+        app.height  = info.Height;
+        app.xmin = info.LonMin;
+        app.ymin = info.LatMin;
+        app.xmax = info.LonMax;
+        app.ymax = info.LatMax;
+        getImage();
+
+    }
+    function clickBtn() {
+
+        if(app.timeout) {
+            btn.innerText = 'play'
+            clearTimeout(app.timeout);
+            app.timeout = null;
+        } else {
+            btn.innerText = 'pause'
+            loop()
+        }
+
+    }
+    function loop() {
+        app.timeout = setTimeout(()=>{
+
+            app.time += 1;
+            app.time = app.time > 47 ? 0 : app.time;
+            getImage();
+            loop();
+        }, 2000)
+    }
+    function getImage() {
+        const {min,max, width, height, xmin, ymin, xmax, ymax} = app;
+        const img = new Image();
+        img.src = '../data/T2_1013/T2_1013_hourly_F0'+(app.time < 10? '0' + app.time: app.time)+'.png';
+        img.onload = function () {
+            let c = document.createElement('canvas');
+            c.width = img.width;
+            c.height = img.height;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            const imgData = ctx.getImageData(0, 0, img.width, img.height);
+
+            const noDataValue = 9.969210e+36;
+            const projection = 4326;
+            const dy = (ymax - ymin)/height,
+                dx = (xmax- xmin)/width;
+            const metadata = { noDataValue, projection, xmin, ymax,
+                pixelWidth: dx, pixelHeight: dy };
+            const arr = [];
+            imgData.data.forEach((item,i) => {if(i%4 === 0){
+                arr.push(imgData.data[i+3]===0? 9.969210e+36 : item / 255 * (max- min) + min)}});
+
+            const data = chunk(arr, width);
+            redrawMap(data, metadata)
+        }
+    }
+    async function redrawMap(data, metadata) {
+        const georaster = await parseGeoraster([data], metadata);
+        if(app.layer) {
+            app.layer.setRaster(georaster);
+        } else {
+            app.layer = new GeoRasterLayer({
+                georaster: georaster,
+                opacity: 0.6,
+                color: colorScale,
+                scale: colorScale,
+                //no_data_value:0,
+                isContain:null,
+                pixelValueToColorFn: value => {
+                    return  colorScale((value- app.min)/(app.max- app.min)).rgba()
+                },
+                fragmentShader:
+                    `void main(void) {
+                    gl_FragColor = texture2D(uTexture0, vec2(vTextureCoords.s, vTextureCoords.t));
+                }`
+            }).addTo(map);
+        }
+
+    }
+
+</script>
+</body>
+</html>

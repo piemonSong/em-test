@@ -237,7 +237,7 @@ var GeoRasterLayer = L.GridLayer.extend({
             let y_pixels = Math.floor((ymax - lat) / pixelHeight);
             const value =  rasters[y_pixels][x_pixels]
             this._popup.setLatLng(e.latlng)
-            .setContent("PM2.5 " +value+"u")
+                .setContent(+(value - 273.15).toFixed(1)+'℃')
                 //.setContent(+(value - 273.15).toFixed(1)+'℃')
                 .openOn(map);
         }
@@ -533,6 +533,23 @@ var GeoRasterLayer = L.GridLayer.extend({
         // ... and then the magic happens.
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     },
+    setRaster(georaster) {
+        this.georaster = georaster;
+        this._maxs = georaster.maxs;
+        this._mins = georaster.mins;
+        this._ranges = georaster.ranges;
+        this._no_data_value = georaster.no_data_value;
+        this._pixelWidth = georaster.pixelWidth;
+        this._pixelHeight = georaster.pixelHeight;
+        this._rasters = georaster.values;
+        this._tiff_width = georaster.width;
+        this._tiff_height = georaster.height;
+        this._xmin = georaster.xmin;
+        this._ymin = georaster.ymin;
+        this._xmax = georaster.xmax;
+        this._ymax = georaster.ymax;
+        this.redraw();
+    }
 });
 
 if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
