@@ -205,7 +205,7 @@
             const imgData = ctx.getImageData(0, 0, img.width, img.height);
 
             const noDataValue = 9.969210e+36;
-            const projection = 4326;
+            const projection = 3857;
             const dy = (ymax - ymin)/height,
                 dx = (xmax- xmin)/width;
             const metadata = { noDataValue, projection, xmin, ymax,

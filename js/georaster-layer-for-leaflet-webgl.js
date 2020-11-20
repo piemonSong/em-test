@@ -101,19 +101,25 @@ var GeoRasterLayer = L.GridLayer.extend({
             const xmax_of_tile = bounds.getEast();
             const ymin_of_tile = bounds.getSouth();
             const ymax_of_tile = bounds.getNorth();
+            const LeftTop3587_Tile = L.Projection.SphericalMercator.project({lat: ymax_of_tile, lng: xmin_of_tile});
+            const RightBottom3587_Tile = L.Projection.SphericalMercator.project({lat: ymin_of_tile, lng: xmax_of_tile});
             const {_ymin, _xmin, _xmax,_ymax,_pixelWidth, _pixelHeight} = this;
 
-            const height_of_rectangle_in_degrees = (ymax_of_tile - ymin_of_tile) /  tile.height * 2;
+            const height_of_rectangle_in_degrees = (LeftTop3587_Tile.y - RightBottom3587_Tile.y) /
+                tile.height * 2;
 
-            const width_of_rectangle_in_degrees = (xmax_of_tile - xmin_of_tile) / tile.width * 2;
+            const width_of_rectangle_in_degrees = (RightBottom3587_Tile.x - LeftTop3587_Tile.x) /
+                tile.width * 2;
+            console.log(LeftTop3587_Tile, RightBottom3587_Tile,height_of_rectangle_in_degrees, width_of_rectangle_in_degrees);
 
             let count = 0;
             const data = new Uint8ClampedArray(tile.height* tile.width);
             for (let h = 0; h < tile.height/2; h++) {
-                const lat = ymax_of_tile - (h + 0.5) * height_of_rectangle_in_degrees;
+                const y = LeftTop3587_Tile.y - (h + 0.5) * height_of_rectangle_in_degrees;
 
                 for (let w = 0; w < tile.width/2; w++) {
-                    const lng = xmin_of_tile + (w + 0.5) * width_of_rectangle_in_degrees;
+                    const x = LeftTop3587_Tile.x + (w + 0.5) * width_of_rectangle_in_degrees;
+                    const {lat, lng} = L.Projection.SphericalMercator.unproject({x, y});
                     if (lat > _ymin && lat < _ymax && lng > _xmin && lng < _xmax
                     ) {
                         // let x_in_raster_pixels = Math.floor((lng - _xmin) / _pixelWidth);
